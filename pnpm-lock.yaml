@@ -1,0 +1,16 @@
+lockfileVersion: '6.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+dependencies:
+  '@types/primer__octicons':
+    specifier: ^19.6.3
+    version: 19.6.3
+
+packages:
+
+  /@types/primer__octicons@19.6.3:
+    resolution: {integrity: sha512-lvDS7/5uZLCnG/h3W5fzMjLsMKAlu2Y4nF615U6FtwMarwCD76l9TvkD8nn0g0fIb2gg81/NsRa2LFvksvukRQ==}
+    dev: false

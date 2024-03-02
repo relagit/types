@@ -41,11 +41,20 @@ type ParamsFromEventType<E extends action> = E extends 'commit'
 											? unknown[]
 											: [Repository];
 
+type OptionTypes = 'string' | 'number' | 'boolean' | 'enum';
+
 interface WorkflowOptions {
 	name: string;
 	description?: string;
 	hooks?: {
 		[K in action]?: (event: K, ...params: ParamsFromEventType<K>) => Promise<void> | void;
+	};
+	options?: {
+		[key: string]: {
+			type: OptionTypes;
+			description: string;
+			placeholder?: string;
+		};
 	};
 }
 
@@ -231,6 +240,14 @@ interface Themes {
 	Theme: new (options: ThemeOptions) => void;
 }
 
+type DElement = {
+	tagName: string;
+	attributes?: Record<string, string | undefined>;
+	children?:
+		| ((DElement | string)[] | string | DElement)
+		| (() => (DElement | string)[] | string | DElement);
+};
+
 interface Actions {
 	/**
 	 * Construct a new workflow runner
@@ -246,29 +263,38 @@ interface Actions {
 	 */
 	context: () => Context;
 	notifications: {
-		show: (
+		show: (props: {
+			icon?: keyof typeof import('@primer/octicons');
+			iconUrl?: string;
+			title: string;
+			description: string;
+			level: 'info' | 'warning' | 'error' | 'success';
+			timeout?: number;
+			actions?: ({
+				children: unknown;
+				type: 'default' | 'brand' | 'danger' | 'outline' | 'positive';
+				onClick?: () => void | Promise<void>;
+				className?: string;
+				disabled?: boolean;
+				dedupe?: boolean;
+				label: string;
+			} & {
+				dismiss?: boolean;
+			})[];
+		}) => void;
+		hide: (id: string | number) => void;
+	};
+	app: {
+		registerSettingsPane: (
 			id: string,
 			props: {
-				id: string;
+				children:
+					| ((DElement | string)[] | string | DElement)
+					| (() => (DElement | string)[] | string | DElement);
+				name: string;
 				icon: keyof typeof import('@primer/octicons');
-				title: string;
-				description: string;
-				level: 'info' | 'warning' | 'error' | 'success';
-				timeout?: number,
-				actions?: ({
-					children: unknown;
-					type: 'default' | 'brand' | 'danger' | 'outline' | 'positive';
-					onClick?: () => void | Promise<void>;
-					className?: string;
-					disabled?: boolean;
-					dedupe?: boolean;
-					label: string;
-				} & {
-					dismiss?: boolean;
-				})[];
 			}
 		) => void;
-		hide: (id: string) => void;
 	};
 }
 
@@ -276,12 +302,33 @@ interface Actions {
 // const Workflow = null,
 // 	context = null,
 // 	Theme = null,
-// 	notifications = null;
+// 	notifications = null,
+// 	app = null;
 
 declare module 'relagit:actions' {
-	const { Workflow, context, notifications }: Actions;
+	const { Workflow, context, notifications, app }: Actions;
 
-	export { Workflow, context, notifications };
+	export { Workflow, context, notifications, app };
+
+	export type OptionsType<
+		T extends {
+			[key: string]: {
+				type: OptionTypes;
+				description: string;
+				placeholder?: string;
+			};
+		}
+	> = {
+		[key in keyof T]: T[key]['type'] extends 'string'
+			? string
+			: T[key]['type'] extends 'number'
+				? number
+				: T[key]['type'] extends 'boolean'
+					? boolean
+					: T[key]['type'] extends 'enum'
+						? string
+						: never;
+	};
 }
 
 declare module 'relagit:themes' {

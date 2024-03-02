@@ -1,19 +1,22 @@
 {
-    "name": "relagit",
-    "version": "0.12.7",
-    "description": "Mirror of RelaGit's type definitions for use in workflows and themes on npm.",
-    "keywords": [
-        "relagit",
-        "relagit-theme",
-        "relagit-workflow",
-        "types"
-    ],
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/relagit/types.git"
-    },
-    "type": "module",
-    "types": "./index.d.ts",
-    "author": "TheCommieAxolotl",
-    "license": "LGPL-3.0-or-later"
+	"name": "relagit",
+	"version": "0.12.7",
+	"description": "Mirror of RelaGit's type definitions for use in workflows and themes on npm.",
+	"keywords": [
+		"relagit",
+		"relagit-theme",
+		"relagit-workflow",
+		"types"
+	],
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/relagit/types.git"
+	},
+	"type": "module",
+	"types": "./index.d.ts",
+	"author": "TheCommieAxolotl",
+	"license": "LGPL-3.0-or-later",
+	"dependencies": {
+		"@types/primer__octicons": "^19.6.3"
+	}
 }
