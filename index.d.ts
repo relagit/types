@@ -20,26 +20,26 @@ type action =
 type ParamsFromEventType<E extends action> = E extends 'commit'
 	? [Repository, { message: string; description: string }]
 	: E extends 'push'
-		? [Repository]
-		: E extends 'pull'
-			? [Repository]
-			: E extends 'navigate'
-				? [Repository | undefined, GitFile | undefined]
-				: E extends 'remote_fetch'
-					? [Repository, { name: string; url: string; type: string }[]]
-					: E extends 'repository_add'
-						? [string]
-						: E extends 'repository_remove'
-							? [string]
-							: E extends 'settings_update'
-								? []
-								: E extends 'stash'
-									? [Repository]
-									: E extends 'stash_pop'
-										? [Repository]
-										: E extends 'all'
-											? unknown[]
-											: [Repository];
+	? [Repository]
+	: E extends 'pull'
+	? [Repository]
+	: E extends 'navigate'
+	? [Repository | undefined, GitFile | undefined]
+	: E extends 'remote_fetch'
+	? [Repository, { name: string; url: string; type: string }[]]
+	: E extends 'repository_add'
+	? [string]
+	: E extends 'repository_remove'
+	? [string]
+	: E extends 'settings_update'
+	? []
+	: E extends 'stash'
+	? [Repository]
+	: E extends 'stash_pop'
+	? [Repository]
+	: E extends 'all'
+	? unknown[]
+	: [Repository];
 
 type OptionTypes = 'string' | 'number' | 'boolean' | 'enum';
 
@@ -248,6 +248,24 @@ type DElement = {
 		| (() => (DElement | string)[] | string | DElement);
 };
 
+type MenuItem =
+	| {
+			type: 'item';
+			label: string;
+			disabled?: boolean;
+			onClick?: () => void;
+			accelerator?: {
+				shift?: boolean;
+				meta?: boolean;
+				alt?: boolean;
+				key: string;
+			};
+			color?: 'default' | 'danger';
+	  }
+	| {
+			type: 'separator';
+	  };
+
 interface Actions {
 	/**
 	 * Construct a new workflow runner
@@ -296,6 +314,9 @@ interface Actions {
 			}
 		) => void;
 	};
+	menu: {
+		extend: (type: string, items: MenuItem[]) => void;
+	};
 }
 
 // NOTE: uncomment these to use prettier, it throws an error when it sees the exported types below
@@ -303,12 +324,13 @@ interface Actions {
 // 	context = null,
 // 	Theme = null,
 // 	notifications = null,
-// 	app = null;
+// 	app = null,
+// 	menu = null;
 
 declare module 'relagit:actions' {
-	const { Workflow, context, notifications, app }: Actions;
+	const { Workflow, context, notifications, app, menu }: Actions;
 
-	export { Workflow, context, notifications, app };
+	export { Workflow, context, notifications, app, menu };
 
 	export type OptionsType<
 		T extends {
@@ -322,12 +344,12 @@ declare module 'relagit:actions' {
 		[key in keyof T]: T[key]['type'] extends 'string'
 			? string
 			: T[key]['type'] extends 'number'
-				? number
-				: T[key]['type'] extends 'boolean'
-					? boolean
-					: T[key]['type'] extends 'enum'
-						? string
-						: never;
+			? number
+			: T[key]['type'] extends 'boolean'
+			? boolean
+			: T[key]['type'] extends 'enum'
+			? string
+			: never;
 	};
 }
 
