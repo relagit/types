@@ -45,6 +45,7 @@ type OptionTypes = 'string' | 'number' | 'boolean' | 'enum';
 
 interface WorkflowOptions {
 	name: string;
+	id?: string;
 	description?: string;
 	hooks?: {
 		[K in action]?: (event: K, ...params: ParamsFromEventType<K>) => Promise<void> | void;
@@ -54,6 +55,7 @@ interface WorkflowOptions {
 			type: OptionTypes;
 			description: string;
 			placeholder?: string;
+			values?: string[];
 		};
 	};
 }
@@ -266,6 +268,64 @@ type MenuItem =
 			type: 'separator';
 	  };
 
+type Captures = Record<string, Rule>;
+
+type GetOnigurumaUrl = () => Promise<Readonly<URL>> | Readonly<URL>;
+
+type Rule = RuleDefinition | RuleInclude | RuleName;
+
+interface Grammar {
+	dependencies?: Array<string>;
+	extensions: Array<string>;
+	extensionsWithDot?: Array<string>;
+	injections?: Record<string, Rule>;
+	names: Array<string>;
+	patterns: Array<Rule>;
+	repository?: Record<string, Rule>;
+	scopeName: string;
+}
+
+interface Options {
+	getOnigurumaUrlFetch?: GetOnigurumaUrl | null | undefined;
+	getOnigurumaUrlFs?: GetOnigurumaUrl | null | undefined;
+}
+
+interface RuleDefinition {
+	applyEndPatternLast?: boolean;
+	begin?: string;
+	beginCaptures?: Captures;
+	captures?: Captures;
+	contentName?: string;
+	end?: string;
+	endCaptures?: Captures;
+	injections?: Record<string, Rule>;
+	match?: string;
+	name?: string;
+	patterns?: Array<Rule>;
+	repository?: Record<string, Rule>;
+	while?: string;
+	whileCaptures?: Captures;
+}
+
+interface RuleInclude {
+	begin?: string;
+	end?: string;
+	include: string;
+	match?: string;
+	name?: string;
+}
+
+interface RuleName {
+	begin?: never;
+	include?: never;
+	match?: never;
+	name: string;
+}
+
+type RecordType = {
+	[key: string | symbol]: string | boolean | number | object | undefined;
+};
+
 interface Actions {
 	/**
 	 * Construct a new workflow runner
@@ -275,6 +335,14 @@ interface Actions {
 	 * export default new Workflow({...})
 	 */
 	Workflow: new (options: WorkflowOptions) => void;
+	/**
+	 * Define a new workflow runner
+	 * @example
+	 * import { defineWorkflow } from "relagit:actions";
+	 *
+	 * export default defineWorkflow({...})
+	 */
+	defineWorkflow: (options: WorkflowOptions) => WorkflowOptions;
 	/**
 	 * When run in a workflow, will return current information about the state of the application.
 	 * @returns {Context}
@@ -302,6 +370,10 @@ interface Actions {
 		}) => number;
 		hide: (id: number) => void;
 	};
+	codeview: {
+		registerGrammar: (grammar: Grammar | Grammar[]) => void;
+		onceLoaded: (cb: () => void) => Promise<void>;
+	};
 	app: {
 		registerSettingsPane: (
 			id: string,
@@ -313,24 +385,59 @@ interface Actions {
 				icon: keyof typeof import('@primer/octicons');
 			}
 		) => void;
+		getInstalledWorkflows: () => WorkflowOptions[];
 	};
 	menu: {
 		extend: (type: string, items: MenuItem[]) => void;
 	};
+	/**
+	 * A utility to generate CRON timings.
+	 * @param time - Either a template string `'5 minutes'` or a number `5`.
+	 * @returns - If a template string is passed, it returns a number. If a number is passed, it returns an object with the time in minutes, hours, days and months.
+	 * @example
+	 * cron`5 minutes` // returns 5
+	 * cron`*\/5 * * * * *` // returns 5
+	 */
+	cron: (<T extends TemplateStringsArray | number>(
+		time: T
+	) => T extends number
+		? {
+				[key in 'seconds' | 'minutes' | 'hours' | 'days' | 'months']: number;
+		  }
+		: number) & {
+		/**
+		 * Schedule a function to run at specific times.
+		 */
+		schedule: (time: number, cb: () => void, proxy: RecordType) => void;
+	};
 }
 
-// NOTE: uncomment these to use prettier, it throws an error when it sees the exported types below
-// const Workflow = null,
-// 	context = null,
-// 	Theme = null,
-// 	notifications = null,
-// 	app = null,
-// 	menu = null;
+/* eslint-disable @typescript-eslint/no-unused-vars */
+// NOTE: these are just here for prettier to not complain about unknown variables
+// @ts-ignore
+const Workflow = '',
+	// @ts-ignore
+	defineWorkflow = '',
+	// @ts-ignore
+	context = '',
+	// @ts-ignore
+	Theme = '',
+	// @ts-ignore
+	notifications = '',
+	// @ts-ignore
+	app = '',
+	// @ts-ignore
+	menu = '',
+	// @ts-ignore
+	codeview = '',
+	// @ts-ignore
+	cron = '';
+/* eslint-enable @typescript-eslint/no-unused-vars */
 
 declare module 'relagit:actions' {
-	const { Workflow, context, notifications, app, menu }: Actions;
+	const { Workflow, defineWorkflow, context, notifications, app, menu, codeview, cron }: Actions;
 
-	export { Workflow, context, notifications, app, menu };
+	export { Workflow, defineWorkflow, context, notifications, app, menu, codeview, cron };
 
 	export type OptionsType<
 		T extends {
@@ -338,6 +445,7 @@ declare module 'relagit:actions' {
 				type: OptionTypes;
 				description: string;
 				placeholder?: string;
+				values?: string[];
 			};
 		}
 	> = {
@@ -350,6 +458,8 @@ declare module 'relagit:actions' {
 			: T[key]['type'] extends 'enum'
 			? string
 			: never;
+	} & {
+		_listener: (cb: (options: OptionsType<T>) => void) => void;
 	};
 }
 
