@@ -1,6 +1,6 @@
 {
 	"name": "relagit",
-	"version": "0.14.7-1",
+	"version": "0.16.0",
 	"description": "Mirror of RelaGit's type definitions for use in workflows and themes on npm.",
 	"keywords": [
 		"relagit",
